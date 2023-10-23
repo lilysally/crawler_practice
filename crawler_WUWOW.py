@@ -1,29 +1,29 @@
 import requests
 from bs4 import BeautifulSoup
-session_requests = requests.session()
-result = session_requests.get("https://taichi.wuwow.tw/login")
-soup = BeautifulSoup(result.text, "html.parser")
 
-_token_1 = soup.find_all("input")[0].get("value")
-_token_2 = soup.find_all("input")[1].get("value")
+# 建立一個 Session
+session = requests.Session()
 
+# 送出 GET 請求取得登入頁面，並取得 CSRF token
+login_url = "https://taichi.wuwow.tw/login"
+response = session.get(login_url)
+soup = BeautifulSoup(response.text, "html.parser")
+csrf_token = soup.select_one('input[name="_token"]')['value']
+
+# 設定登入資訊
 login_data = {
-    "_token": _token_1,
-    "_token": _token_2,
+    "_token": csrf_token,
     "account": "0900224882",
     "password": "changeop890",
 }
-headers = {
-'user-agent':"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36",
-"Accept-Language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7"
-}
 
-result = session_requests.post("https://taichi.wuwow.tw/login", data=login_data, headers=headers)
-if result.history:
-    print("Request was redirected")
-    for resp in result.history:
-        print(resp.status_code, resp.url)
-    print("Final destination:")
-    print(result.status_code, result.url)
+# 送出 POST 請求登入
+response = session.post(login_url, data=login_data)
+
+# 檢查是否成功登入
+if response.url == "https://taichi.wuwow.tw/dojo":
+    print("成功登入，目前位於 https://taichi.wuwow.tw/dojo 頁面")
 else:
-    print("Request was not redirected")
+    print("登入失敗")
+
+# 如果登入成功，你可以繼續使用 session 來訪問 https://taichi.wuwow.tw/dojo 頁面
